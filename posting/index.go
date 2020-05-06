@@ -573,7 +573,7 @@ func (r *rebuilder) Run(ctx context.Context) error {
 	// We set it to 1 in case there are no keys found and NewStreamAt is called with ts=0.
 	var counter uint64 = 1
 
-	tmpWriter := tmpDB.NewManagedWriteBatch()
+	//tmpWriter := tmpDB.NewManagedWriteBatch()
 	stream := pstore.NewStreamAt(r.startTs)
 	stream.LogPrefix = fmt.Sprintf("Rebuilding index for predicate %s (1/2):", r.attr)
 	stream.Prefix = r.prefix
@@ -622,20 +622,21 @@ func (r *rebuilder) Run(ctx context.Context) error {
 		return &bpb.KVList{Kv: kvs}, nil
 	}
 	stream.Send = func(kvList *bpb.KVList) error {
+		tmpWriter := tmpDB.NewManagedWriteBatch()
 		if err := tmpWriter.Write(kvList); err != nil {
 			return errors.Wrap(err, "error setting entries in temp badger")
 		}
 
-		return nil
+		return tmpWriter.Flush()
 	}
 
 	start := time.Now()
 	if err := stream.Orchestrate(ctx); err != nil {
 		return err
 	}
-	if err := tmpWriter.Flush(); err != nil {
-		return err
-	}
+	// if err := tmpWriter.Flush(); err != nil {
+	// 	return err
+	// }
 	glog.V(1).Infof("Rebuilding index for predicate %s: building temp index took: %v\n",
 		r.attr, time.Since(start))
 	fmt.Printf("Anurag: Rebuilding index for predicate %s: building temp index took: %v\n",
