@@ -1,6 +1,6 @@
 type Message {
     id: ID!
-    content: String!
-    author: String
+    content: String! @dgraph(pred: "post")
+    author: String @dgraph(pred: "<职业>")
     datePosted: DateTime
 }
